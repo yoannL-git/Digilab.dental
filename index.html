@@ -1,0 +1,801 @@
+import React, { useState } from 'react';
+import { 
+  Check, 
+  Menu, 
+  X, 
+  ChevronRight, 
+  Database, 
+  ShieldCheck, 
+  Zap, 
+  Users, 
+  Layers, 
+  HardDrive,
+  Activity,
+  Server,
+  Code,
+  Building,
+  Factory,
+  Star,
+  RefreshCw,
+  ArrowDown,
+  Trophy,
+  Plus,
+  Minus,
+  HelpCircle,
+  Package
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// --- Configuration des Couleurs & Données ---
+
+const BRAND = {
+  dark: '#0077a8',    // Bleu foncé (Grands Labos)
+  medium: '#497fa6',  // Bleu moyen (Petits Labos)
+  light: '#b9d4df',   // Bleu clair (Fonds subtils)
+  bg: '#f8fafc',      // Fond général
+  text: '#0f172a'     // Texte principal
+};
+
+const SCANNERS = [
+  "3Shape", "MEDIT", "DEXIS", "Itero", "Panda", "Allied Star", "Shining3D", "DSCore"
+];
+
+// Données segmentées
+const PRICING_DATA = {
+  small: [
+    { cases: 100, basic: 49, essential: 89 },
+    { cases: 200, basic: 90, essential: 169 },
+    { cases: 500, basic: 210, essential: 410 }
+  ],
+  large: [
+    { cases: 500, label: "500 (Industriel)", basic: 245, essential: 395 },
+    { cases: 1000, basic: 450, essential: 750 },
+    { cases: 2000, basic: 840, essential: 1439 }
+  ]
+};
+
+const FAQ_ITEMS = [
+  {
+    question: "Comment se passe l'installation ?",
+    answer: "C'est immédiat. Digilab est une solution 100% web. Vous créez votre compte, connectez vos portails (3Shape, Medit, etc.) via vos identifiants habituels, et les flux arrivent automatiquement. Comptez environ 10 minutes."
+  },
+  {
+    question: "Puis-je changer d'offre en cours de mois ?",
+    answer: "Oui, tout à fait. Si votre volume augmente, vous pouvez passer au plan supérieur instantanément. La facturation sera ajustée au prorata."
+  },
+  {
+    question: "Mes données sont-elles sécurisées ?",
+    answer: "Absolument. Nous utilisons des serveurs certifiés HDS (Hébergement de Données de Santé) situés en France, garantissant la conformité RGPD et la sécurité maximale pour les données patients."
+  },
+  {
+    question: "Quels moyens de paiement acceptez-vous ?",
+    answer: "Nous acceptons les cartes bancaires (Visa, Mastercard, Amex) et les prélèvements SEPA pour les abonnements annuels."
+  }
+];
+
+// --- Composants UI ---
+
+const Button = ({ children, variant = 'primary', className = '', href, onClick, ...props }) => {
+  const baseStyle = "px-6 py-3 rounded-full font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm md:text-base cursor-pointer";
+  const variants = {
+    primary: `text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5`,
+    secondary: `bg-white text-slate-700 border border-slate-200 hover:border-[${BRAND.medium}] hover:text-[${BRAND.dark}]`,
+    outline: `border-2 border-[${BRAND.light}] text-[${BRAND.dark}] hover:bg-[${BRAND.light}]/20`,
+    ghost: `text-slate-600 hover:text-[${BRAND.dark}] hover:bg-slate-50`
+  };
+
+  const Component = href ? 'a' : motion.button;
+  const extraProps = href ? { href, onClick: (e) => { 
+      e.preventDefault(); 
+      if(onClick) onClick(e);
+      const element = document.querySelector(href);
+      if(element) element.scrollIntoView({ behavior: 'smooth' });
+  }} : { whileTap: { scale: 0.98 }, onClick };
+
+  return (
+    <Component 
+      className={`${baseStyle} ${variants[variant]} ${className}`}
+      style={variant === 'primary' ? { backgroundColor: BRAND.dark } : {}}
+      {...props}
+      {...extraProps}
+    >
+      {children}
+    </Component>
+  );
+};
+
+const Badge = ({ children }) => (
+  <span 
+    className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 inline-block"
+    style={{ backgroundColor: `${BRAND.light}40`, color: BRAND.dark }}
+  >
+    {children}
+  </span>
+);
+
+// --- Sections du Site ---
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <nav className="fixed w-full z-50 backdrop-blur-md bg-white/80 border-b border-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: BRAND.dark }}>
+              <Activity className="text-white w-5 h-5" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-800">Digilab<span style={{ color: BRAND.medium }}>.dental</span></span>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-8">
+            <a href="#features" className="text-slate-600 hover:text-slate-900 font-medium text-sm">Fonctionnalités</a>
+            <a href="#pricing" className="text-slate-600 hover:text-slate-900 font-medium text-sm">Tarifs</a>
+            <div className="h-4 w-px bg-slate-200"></div>
+            <a href="#" className="text-slate-600 hover:text-slate-900 font-medium text-sm">Connexion</a>
+            <Button variant="primary" className="!py-2 !px-4 !text-sm" href="#pricing">Essai gratuit</Button>
+          </div>
+
+          <div className="md:hidden">
+            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 p-2">
+              {isOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white border-b border-slate-100 overflow-hidden"
+          >
+            <div className="px-4 pt-2 pb-6 space-y-4 flex flex-col">
+              <a href="#features" onClick={() => setIsOpen(false)} className="block py-2 text-slate-600 font-medium">Fonctionnalités</a>
+              <a href="#pricing" onClick={() => setIsOpen(false)} className="block py-2 text-slate-600 font-medium">Tarifs</a>
+              <Button variant="primary" className="w-full justify-center" href="#pricing" onClick={() => setIsOpen(false)}>Commencer l'essai</Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  );
+};
+
+const Hero = () => {
+  return (
+    <section className="pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden relative">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+        <div className="absolute top-20 right-0 w-[500px] h-[500px] rounded-full blur-[100px] opacity-20" style={{ backgroundColor: BRAND.medium }}></div>
+        <div className="absolute top-40 left-0 w-[400px] h-[400px] rounded-full blur-[80px] opacity-20" style={{ backgroundColor: BRAND.light }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Badge>Hub de Gestion des Flux Dentaires</Badge>
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-slate-900 mb-6 max-w-4xl mx-auto leading-[1.1]">
+            Centralisez toutes vos commandes dentaires <br className="hidden md:block"/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r" style={{ backgroundImage: `linear-gradient(to right, ${BRAND.dark}, ${BRAND.medium})` }}>
+              automatiquement.
+            </span>
+          </h1>
+          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Connectez 3Shape, Medit, Dexis et plus encore en une seule interface. 
+            Gagnez du temps, éliminez les erreurs et accédez instantanément à vos fichiers.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button variant="primary" className="w-full sm:w-auto text-lg px-8" href="#pricing">
+              Commencer maintenant <ArrowDown className="w-4 h-4 ml-2" />
+            </Button>
+            <Button variant="secondary" className="w-full sm:w-auto">
+              Voir la démo (2min)
+            </Button>
+          </div>
+          
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-500">
+            <Check className="w-4 h-4 text-green-500" /> 14 jours d'essai gratuit
+            <span className="mx-2">•</span>
+            <Check className="w-4 h-4 text-green-500" /> Mise en place en 10 min
+          </div>
+        </motion.div>
+
+        <div className="mt-24 pt-8 border-t border-slate-100">
+          <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-6">Compatible avec vos outils préférés</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+             {SCANNERS.map((scanner, index) => (
+               <span key={index} className="text-xl md:text-2xl font-bold text-slate-300 hover:text-slate-600 cursor-default">
+                 {scanner}
+               </span>
+             ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const FeatureCard = ({ icon: Icon, title, description }) => (
+  <div className="p-8 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6" style={{ backgroundColor: `${BRAND.light}30` }}>
+      <Icon className="w-6 h-6" style={{ color: BRAND.dark }} />
+    </div>
+    <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
+    <p className="text-slate-600 leading-relaxed">{description}</p>
+  </div>
+);
+
+const Features = () => {
+  return (
+    <section id="features" className="py-24 bg-white relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">L'efficacité avant tout</h2>
+          <p className="text-lg text-slate-600">
+            Conçu pour remplacer la multitude de portails par un flux unique, fluide et sécurisé.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <FeatureCard 
+            icon={Layers}
+            title="Inbox Universelle"
+            description={<span>Recevez toutes vos empreintes (3Shape, Medit, etc.) au même endroit. <strong className="text-emerald-600">Gagnez 60% de temps</strong> en supprimant les allers-retours entre 5 portails différents.</span>}
+          />
+          <FeatureCard 
+            icon={Zap}
+            title="Setup en 10 minutes"
+            description="Une installation plug-and-play. Connectez vos comptes scanners et commencez à recevoir des fichiers immédiatement."
+          />
+          <FeatureCard 
+            icon={ShieldCheck}
+            title="Sécurité HDS"
+            description="Vos données de santé sont hébergées sur des serveurs certifiés HDS. Sauvegarde automatique et conformité RGPD."
+          />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const PricingCard = ({ tier, type, isAnnual, accentColor, containerBg }) => {
+  const isEssential = type === 'essential';
+  const price = isEssential ? tier.essential : tier.basic;
+  const displayPrice = isAnnual ? Math.round((price * 11) / 12) : price;
+
+  // Si on est dans un container coloré (Grands Labos), on adapte le fond de la carte pour qu'elle ressorte
+  const cardBg = containerBg === '#f0f9ff' ? 'bg-white' : 'bg-white';
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className={`relative p-6 rounded-xl flex flex-col h-full transition-all duration-300 ${cardBg} ${isEssential ? 'shadow-lg border-2' : 'border border-slate-200'}`}
+      style={isEssential ? { borderColor: accentColor } : {}}
+    >
+      {isEssential && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-white text-[10px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1 shadow-sm"
+             style={{ backgroundColor: accentColor }}>
+          <Star className="w-3 h-3 fill-current" /> Recommandé
+        </div>
+      )}
+      
+      <div className="mb-4 text-center">
+         <div className="text-xs font-semibold px-2 py-1 bg-slate-100 rounded text-slate-600 inline-block mb-2">
+             {tier.label || `${tier.cases} cas / mois`}
+         </div>
+        
+        <div className="flex items-baseline justify-center">
+          <span className="text-3xl font-extrabold text-slate-900">{displayPrice}€</span>
+          <span className="text-slate-500 text-sm font-normal">/mois</span>
+        </div>
+        {isAnnual && (
+           <p className="text-[10px] text-slate-400 mt-1">
+             Facturé {price * 11}€ /an
+           </p>
+        )}
+      </div>
+
+      <div className="flex-1 space-y-4 mb-6">
+        <ul className="space-y-3">
+          <li>
+             <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                <Users className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>{isEssential ? '5 collaborateurs' : '2 collaborateurs'}</span>
+             </div>
+             {isEssential && <p className="text-[10px] text-slate-400 leading-tight pl-5 mt-0.5">Permet à toute votre équipe (technicien, administratif, manager) de collaborer ensemble et en temps réel.</p>}
+          </li>
+          
+          <li>
+            <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                <Database className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>Backup {isEssential ? '12 mois' : '1 mois'}</span>
+            </div>
+            {isEssential && <p className="text-[10px] text-slate-400 leading-tight pl-5 mt-0.5">Assurez une traçabilité complète de vos dispositifs sur un an. Sérénité en cas de contrôle, confiance pour vos clients.</p>}
+          </li>
+
+          {isEssential && (
+            <li>
+                <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                  <Check className="w-3 h-3 text-green-500 shrink-0" />
+                  <span>Accès sous-traitants</span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight pl-5 mt-0.5">Connectez vos partenaires à votre flux de travail.</p>
+            </li>
+          )}
+          {isEssential && (
+            <li>
+                <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                    <Check className="w-3 h-3 text-green-500 shrink-0" />
+                    <span>Personnalisation</span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight pl-5 mt-0.5">Offrez à vos dentistes et collaborateurs un espace à vos couleurs.</p>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      <div className="mt-auto pt-4">
+        <Button 
+            className="w-full !py-2 !text-sm border-none shadow-none text-center justify-center"
+            style={isEssential ? { backgroundColor: accentColor, color: 'white' } : { backgroundColor: '#e2e8f0', color: '#475569' }}
+        >
+            Démarrer mes 14j offerts
+        </Button>
+        <p className="text-[10px] text-center text-slate-400 mt-2 leading-tight">
+            100 cas offerts pour tester.
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+const ApiContent = () => (
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    className="p-8 md:p-12 text-white"
+  >
+    <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <div className="flex items-center gap-2 mb-4 text-[#497fa6]">
+          <Code className="w-5 h-5" />
+          <span className="font-mono text-sm uppercase tracking-wider">Solution API Unique</span>
+        </div>
+        <h3 className="text-3xl font-bold mb-4 text-white">Intégration Industrielle</h3>
+        <p className="text-slate-400 mb-8 leading-relaxed">
+          Pour les structures traitant plus de 2 000 cas/mois. Connectez Digilab directement à votre ERP ou flux propriétaire.
+        </p>
+        
+        <div className="flex items-baseline mb-8">
+          <span className="text-5xl font-bold text-white">3 500€</span>
+          <span className="text-slate-400 ml-3 text-sm">Frais fixes (Setup unique)</span>
+        </div>
+
+        <ul className="space-y-4 mb-8">
+          <li className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-green-400 shrink-0" />
+            <span className="text-slate-300">Mise en place technique "clé en main"</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Check className="w-5 h-5 text-green-400 shrink-0" />
+            <span className="text-slate-300">Support ingénieur dédié</span>
+          </li>
+        </ul>
+
+        <Button className="bg-white text-slate-900 hover:bg-slate-100 border-none w-full md:w-auto">
+          Contacter l'équipe API
+        </Button>
+      </div>
+
+      <div className="bg-black/30 rounded-xl p-6 border border-slate-700/50 font-mono text-xs shadow-inner">
+         <div className="flex justify-between items-center mb-4 border-b border-slate-700/50 pb-2">
+            <span className="text-slate-400">api-usage-example.js</span>
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"/>
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"/>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"/>
+            </div>
+         </div>
+         <div className="space-y-2 text-slate-300 opacity-80">
+            <p><span className="text-purple-400">const</span> client = <span className="text-blue-400">new</span> DigilabClient({'{'} key: <span className="text-green-400">"..."</span> {'}'});</p>
+            <p className="text-slate-500">// Sync orders from all sources</p>
+            <p><span className="text-purple-400">await</span> client.orders.sync({'{'}</p>
+            <p className="pl-4">sources: [<span className="text-green-400">'3shape'</span>, <span className="text-green-400">'medit'</span>],</p>
+            <p className="pl-4">destination: <span className="text-green-400">'erp_v2'</span></p>
+            <p>{'}'});</p>
+         </div>
+      </div>
+    </div>
+  </motion.div>
+);
+
+const Pricing = () => {
+  const [activeTab, setActiveTab] = useState('small'); // 'small', 'large', 'api'
+  const [isAnnual, setIsAnnual] = useState(true);
+
+  // Configuration des onglets avec leurs couleurs spécifiques (Distinction Subtile)
+  const tabs = [
+    { 
+      id: 'small', 
+      label: 'Petits Laboratoires', 
+      icon: Building,
+      color: BRAND.medium, // #497fa6
+      containerBg: 'white', // Blanc pur pour les petits
+      desc: "Idéal pour les structures de 1 à 10 personnes."
+    },
+    { 
+      id: 'large', 
+      label: 'Grands Laboratoires', 
+      icon: Factory,
+      color: BRAND.dark, // #0077a8 (Plus foncé)
+      containerBg: '#f0f9ff', // Très léger bleu pour les grands
+      desc: "Pour les centres de production et gros volumes."
+    },
+    { 
+      id: 'api', 
+      label: 'API & Intégration', 
+      icon: Code,
+      color: '#334155', // Slate
+      containerBg: '#1e293b', // Dark
+      desc: "Connectivité directe pour vos systèmes."
+    },
+  ];
+
+  const activeTabData = tabs.find(t => t.id === activeTab);
+
+  return (
+    <section id="pricing" className="py-24 relative" style={{ backgroundColor: BRAND.bg }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <Badge>Tarification Flexible</Badge>
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6">
+            Choisissez l'échelle qui <br/>vous correspond.
+          </h2>
+          {/* Ajout d'une phrase rassurante sur le process d'essai */}
+          <p className="text-slate-600 text-lg max-w-2xl mx-auto">
+            Activez votre période d'essai de 14 jours sur la formule de votre choix.
+            <span className="font-semibold text-emerald-600"> Jusqu'à 100 cas offerts, sans engagement.</span>
+          </p>
+        </div>
+
+        {/* Unified Tabbed Folder Interface */}
+        <div className="max-w-6xl mx-auto">
+          
+          {/* Tabs Navigation Row */}
+          <div className="flex flex-wrap justify-center sm:justify-start gap-0 px-4 sm:px-0 relative z-20">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`
+                    relative px-6 py-4 rounded-t-xl font-bold text-sm md:text-base flex items-center gap-3 transition-all duration-200 border-t border-l border-r 
+                    ${isActive 
+                      ? 'translate-y-[2px] z-30' // Pousser vers le bas pour couvrir la ligne du conteneur
+                      : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700 border-transparent mb-1 scale-95 origin-bottom'
+                    }
+                  `}
+                  style={isActive ? { 
+                    borderColor: activeTab === 'api' ? '#334155' : tab.color,
+                    backgroundColor: tab.containerBg, // Fond identique au container pour la fusion
+                    color: activeTab === 'api' ? 'white' : tab.color,
+                    borderBottomWidth: '0px' // Pas de bordure en bas pour ouvrir vers le contenu
+                  } : {}}
+                >
+                  <Icon className={`w-5 h-5 ${!isActive && 'opacity-50'}`} />
+                  {tab.label}
+                  {/* Petit "masque" additionnel pour garantir la fusion pixel-perfect en bas */}
+                  {isActive && (
+                    <div 
+                        className="absolute -bottom-1 left-0 w-full h-2 z-40"
+                        style={{ backgroundColor: tab.containerBg }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Connected Content Container (The "Folder" Body) */}
+          <div 
+            className="rounded-b-2xl rounded-tr-2xl relative shadow-xl overflow-hidden transition-colors duration-500 border-2 relative z-10"
+            style={{ 
+              backgroundColor: activeTabData.containerBg,
+              borderColor: activeTab === 'api' ? '#334155' : activeTabData.color
+            }}
+          >
+            {/* Header inside the folder */}
+            <div className={`px-8 py-6 border-b ${activeTab === 'api' ? 'border-slate-700' : 'border-slate-100'}`}>
+               <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${activeTab === 'api' ? 'bg-slate-800 text-white' : 'bg-white shadow-sm'}`} style={activeTab !== 'api' ? { color: activeTabData.color } : {}}>
+                      <activeTabData.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className={`text-lg font-bold ${activeTab === 'api' ? 'text-white' : 'text-slate-900'}`}>
+                        Offres {activeTabData.label}
+                      </h3>
+                      <p className={`text-sm ${activeTab === 'api' ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {activeTabData.desc}
+                      </p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Grid Content */}
+            <div className="p-8">
+              <AnimatePresence mode="wait">
+                {(activeTab === 'small' || activeTab === 'large') && (
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-12"
+                  >
+                    {/* TOP ROW: ESSENTIAL (Recommended) */}
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: activeTabData.color }}></span>
+                        Pour Structurer une production, assurer une traçabilité parfaite
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {PRICING_DATA[activeTab].map((tier, idx) => (
+                           <PricingCard 
+                              key={`essential-${idx}`}
+                              tier={tier} 
+                              type="essential" 
+                              isAnnual={isAnnual} 
+                              accentColor={activeTabData.color}
+                              containerBg={activeTabData.containerBg}
+                            />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-slate-100"></div>
+
+                    {/* BOTTOM ROW: BASIC */}
+                    <div>
+                       <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                        Offres de Démarrage (Basic)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                         {PRICING_DATA[activeTab].map((tier, idx) => (
+                            <PricingCard 
+                              key={`basic-${idx}`}
+                              tier={tier} 
+                              type="basic" 
+                              isAnnual={isAnnual} 
+                              accentColor={activeTabData.color}
+                              containerBg={activeTabData.containerBg}
+                            />
+                         ))}
+                      </div>
+                    </div>
+
+                     {/* REASSURANCE OVERAGE BLOCK */}
+                    <div className="bg-white rounded-xl p-6 border border-slate-200 mt-8 shadow-sm">
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                         <div className="flex items-start gap-4">
+                            <div className="bg-orange-100 p-3 rounded-full shrink-0">
+                               <Package className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-900 mb-1">Dépassez votre forfait ? Pas de panique.</h4>
+                              <p className="text-sm text-slate-600 leading-relaxed max-w-xl">
+                                Vous pourrez acheter nos packs ou basculer sur le plan supérieur à tout moment. 
+                                <span className="block mt-1">Avec notre offre annuelle, vous ne perdez pas un centime : <span className="font-semibold text-emerald-600">vos crédits inutilisés seront automatiquement reportés au mois suivant.</span></span>
+                              </p>
+                            </div>
+                         </div>
+                         <Button variant="outline" className="shrink-0 text-sm">
+                            Voir les packs de crédits
+                         </Button>
+                      </div>
+                    </div>
+
+                    {/* LARGE TOGGLE AT THE BOTTOM OF SECTION - REDUCED SIZE */}
+                    <div className="mt-8 pt-8 border-t border-slate-200/60">
+                       <div className="flex flex-col items-center justify-center text-center">
+                          <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Fréquence de facturation</h4>
+                          
+                          <div className="relative inline-flex bg-slate-200/50 p-1 rounded-full mb-4 shadow-inner">
+                              <div 
+                                  className="absolute inset-y-1 transition-all duration-300 ease-out bg-white rounded-full shadow-sm border border-slate-100"
+                                  style={{ 
+                                      left: isAnnual ? '50%' : '4px', 
+                                      right: isAnnual ? '4px' : '50%',
+                                      backgroundColor: isAnnual ? activeTabData.color : 'white'
+                                  }} 
+                              />
+                              <button 
+                                  onClick={() => setIsAnnual(false)}
+                                  className={`relative z-10 w-32 py-2 rounded-full text-sm font-bold transition-colors duration-300 ${!isAnnual ? 'text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                  Mensuel
+                              </button>
+                              <button 
+                                  onClick={() => setIsAnnual(true)}
+                                  className={`relative z-10 w-32 py-2 rounded-full text-sm font-bold transition-colors duration-300 ${isAnnual ? 'text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                              >
+                                  Annuel
+                              </button>
+                          </div>
+
+                          <div className="min-h-[32px]">
+                            <AnimatePresence mode="wait">
+                                {isAnnual ? (
+                                    <motion.div 
+                                        key="annual-benefit"
+                                        initial={{ opacity: 0, y: -2 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 2 }}
+                                        className="flex items-center gap-1.5 text-emerald-600 font-bold bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100 shadow-sm text-xs md:text-sm"
+                                    >
+                                       <RefreshCw className="w-4 h-4" /> 
+                                       Économisez 1 mois & report des crédits
+                                    </motion.div>
+                                ) : (
+                                    <motion.div 
+                                        key="monthly-benefit"
+                                        initial={{ opacity: 0, y: -2 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 2 }}
+                                        className="text-slate-400 font-medium px-4 py-1.5 flex items-center gap-2 text-xs md:text-sm"
+                                    >
+                                       <span>Sans engagement, résiliez quand vous voulez</span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                          </div>
+                       </div>
+                    </div>
+
+                  </motion.div>
+                )}
+
+                {activeTab === 'api' && (
+                   <motion.div key="api">
+                     <ApiContent />
+                   </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            {/* Folder Footer Bar */}
+            <div 
+              className="h-2 w-full" 
+              style={{ backgroundColor: activeTabData.color }}
+            />
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="mt-16 text-center text-slate-500 text-sm">
+           <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs">
+              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-500"/> Pas de frais cachés</span>
+              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-500"/> Upgrade au prorata</span>
+              <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-500"/> Support inclus</span>
+           </div>
+        </div>
+
+      </div>
+    </section>
+  );
+};
+
+const Awards = () => (
+  <section className="py-16 bg-slate-50 border-t border-slate-200">
+    <div className="max-w-4xl mx-auto px-4 text-center">
+       <div className="inline-flex items-center justify-center p-4 bg-yellow-100 rounded-full mb-6">
+          <Trophy className="w-8 h-8 text-yellow-600" />
+       </div>
+       <h2 className="text-2xl font-bold text-slate-900 mb-4">Digilab reconnue par la profession</h2>
+       <p className="text-lg text-slate-600 leading-relaxed">
+         La technologie Digilab récompensée par les experts du dental forum pour son impact sur le quotidien des laboratoires.
+       </p>
+    </div>
+  </section>
+);
+
+const FaqItem = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="border-b border-slate-200">
+      <button 
+        className="w-full py-6 flex items-center justify-between text-left focus:outline-none"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="text-lg font-medium text-slate-900">{question}</span>
+        {isOpen ? <Minus className="w-5 h-5 text-slate-400" /> : <Plus className="w-5 h-5 text-slate-400" />}
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <p className="pb-6 text-slate-600 leading-relaxed">
+              {answer}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const FaqSection = () => (
+  <section className="py-24 bg-white">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-16">
+        <h2 className="text-3xl font-bold text-slate-900 mb-4">Questions Fréquentes</h2>
+        <p className="text-slate-600">Tout ce que vous devez savoir avant de commencer.</p>
+      </div>
+      <div>
+        {FAQ_ITEMS.map((item, index) => (
+          <FaqItem key={index} question={item.question} answer={item.answer} />
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+const Footer = () => (
+  <footer className="bg-slate-50 pt-16 pb-8 border-t border-slate-200">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+        <div className="flex items-center gap-2 mb-4 md:mb-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: BRAND.dark }}>
+            <Activity className="text-white w-5 h-5" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-slate-800">Digilab<span style={{ color: BRAND.medium }}>.dental</span></span>
+        </div>
+        <div className="flex gap-8 text-sm text-slate-500">
+          <a href="#" className="hover:text-[#0077a8]">Mentions Légales</a>
+          <a href="#" className="hover:text-[#0077a8]">Confidentialité</a>
+          <a href="#" className="hover:text-[#0077a8]">Support</a>
+        </div>
+      </div>
+      <div className="text-center text-slate-400 text-sm">
+        &copy; {new Date().getFullYear()} Digilab Dental. Tous droits réservés.
+      </div>
+    </div>
+  </footer>
+);
+
+export default function App() {
+  return (
+    <div className="font-sans antialiased text-slate-900 bg-white selection:bg-[#b9d4df] selection:text-[#0077a8]">
+      <Navbar />
+      <main>
+        <Hero />
+        <Features />
+        <Pricing />
+        <Awards />
+        <FaqSection />
+      </main>
+      <Footer />
+    </div>
+  );
+}
